@@ -133,9 +133,17 @@ def get_safe_filepath(filename):
 # Store download progress
 downloads = {}
 DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downloads')
+COOKIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt')
 
 # Ensure download directory exists
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+
+def get_cookies_args():
+    """Return yt-dlp cookie arguments if cookies file exists"""
+    if os.path.isfile(COOKIES_FILE):
+        return ['--cookies', COOKIES_FILE]
+    return []
 
 
 def sanitize_filename(filename):
@@ -155,17 +163,20 @@ def get_video_info(url, retries=3):
             if attempt > 0:
                 time.sleep(2 ** attempt)  # 2s, 4s between retries
 
+            cmd = [
+                'yt-dlp',
+                '--dump-json',
+                '--no-download',
+                '--no-check-certificates',
+                '--geo-bypass',
+                '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                '--extractor-args', 'youtube:player_client=default',
+            ]
+            cmd.extend(get_cookies_args())
+            cmd.extend(['--', url])
+
             result = subprocess.run(
-                [
-                    'yt-dlp',
-                    '--dump-json',
-                    '--no-download',
-                    '--no-check-certificates',
-                    '--geo-bypass',
-                    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    '--extractor-args', 'youtube:player_client=default',
-                    '--', url
-                ],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=60
@@ -222,6 +233,7 @@ def download_video(url, download_id, format_option='best', audio_only=False):
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             '--extractor-args', 'youtube:player_client=web,default;youtube:player_skip=webpage',
         ]
+        cmd.extend(get_cookies_args())
 
         if audio_only:
             cmd.extend(['-x', '--audio-format', 'mp3'])
@@ -490,6 +502,50 @@ def delete_file(filename):
         return jsonify({'error': 'File not found'}), 404
     os.remove(filepath)
     return jsonify({'success': True})
+
+
+@app.route('/api/cookies', methods=['GET'])
+def get_cookies_status():
+    """Check if cookies are configured"""
+    has_cookies = os.path.isfile(COOKIES_FILE)
+    return jsonify({
+        'has_cookies': has_cookies,
+        'message': 'YouTube cookies configured' if has_cookies else 'No cookies configured'
+    })
+
+
+@app.route('/api/cookies', methods=['POST'])
+def upload_cookies():
+    """Upload cookies.txt file"""
+    if 'cookies' not in request.files:
+        # Try to get cookies from JSON body
+        data = request.json
+        if data and 'cookies' in data:
+            cookies_content = data['cookies']
+            # Basic validation - should start with Netscape cookie header or have cookie data
+            if not cookies_content.strip():
+                return jsonify({'error': 'Empty cookies content'}), 400
+            with open(COOKIES_FILE, 'w') as f:
+                f.write(cookies_content)
+            return jsonify({'success': True, 'message': 'Cookies saved successfully'})
+        return jsonify({'error': 'No cookies provided'}), 400
+
+    file = request.files['cookies']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    # Save the cookies file
+    file.save(COOKIES_FILE)
+    return jsonify({'success': True, 'message': 'Cookies uploaded successfully'})
+
+
+@app.route('/api/cookies', methods=['DELETE'])
+def delete_cookies():
+    """Delete cookies file"""
+    if os.path.isfile(COOKIES_FILE):
+        os.remove(COOKIES_FILE)
+        return jsonify({'success': True, 'message': 'Cookies deleted'})
+    return jsonify({'error': 'No cookies file found'}), 404
 
 
 if __name__ == '__main__':

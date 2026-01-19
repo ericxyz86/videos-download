@@ -415,6 +415,116 @@
             opacity: 1;
         }
 
+        .settings-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .cookie-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .cookie-status.active {
+            background: rgba(46, 204, 113, 0.15);
+            color: #2ecc71;
+        }
+
+        .cookie-status.inactive {
+            background: rgba(231, 76, 60, 0.15);
+            color: #e74c3c;
+        }
+
+        .cookie-status svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .cookie-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .cookie-modal.visible {
+            display: flex;
+        }
+
+        .cookie-modal-content {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cookie-modal-content h3 {
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+        }
+
+        .cookie-modal-content p {
+            color: #888;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .cookie-modal-content ol {
+            color: #888;
+            margin-left: 20px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .cookie-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            font-size: 0.85rem;
+            font-family: monospace;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            margin-bottom: 16px;
+            resize: vertical;
+        }
+
+        .cookie-textarea:focus {
+            outline: none;
+            border-color: #ff6b6b;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
         .loading {
             display: inline-block;
             width: 20px;
@@ -463,6 +573,23 @@
             </div>
             <p class="subtitle">Download videos from YouTube with ease</p>
         </header>
+
+        <div class="settings-bar">
+            <div class="cookie-status" id="cookieStatus">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                <span>Checking...</span>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="showCookieModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Settings
+            </button>
+        </div>
 
         <div class="input-section">
             <div class="url-input-wrapper">
@@ -544,6 +671,25 @@
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <div class="cookie-modal" id="cookieModal">
+        <div class="cookie-modal-content">
+            <h3>YouTube Cookie Settings</h3>
+            <p>To bypass YouTube rate limiting, you can add cookies from your browser. This authenticates downloads as you.</p>
+            <ol>
+                <li>Install "Get cookies.txt LOCALLY" extension in your browser</li>
+                <li>Go to youtube.com and make sure you're logged in</li>
+                <li>Click the extension and export cookies for youtube.com</li>
+                <li>Paste the contents below</li>
+            </ol>
+            <textarea class="cookie-textarea" id="cookieInput" placeholder="Paste cookies.txt content here..."></textarea>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary btn-small" onclick="deleteCookies()">Delete Cookies</button>
+                <button class="btn btn-secondary btn-small" onclick="closeCookieModal()">Cancel</button>
+                <button class="btn btn-primary btn-small" onclick="saveCookies()">Save Cookies</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         let currentDownloadId = null;
@@ -840,8 +986,103 @@
             }, 3000);
         }
 
-        // Load downloads on page load
+        // Cookie management
+        async function checkCookieStatus() {
+            try {
+                const response = await fetch('/api/cookies');
+                const data = await response.json();
+                const statusEl = document.getElementById('cookieStatus');
+
+                if (data.has_cookies) {
+                    statusEl.className = 'cookie-status active';
+                    statusEl.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        <span>Cookies Active</span>
+                    `;
+                } else {
+                    statusEl.className = 'cookie-status inactive';
+                    statusEl.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                        <span>No Cookies</span>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error checking cookie status:', error);
+            }
+        }
+
+        function showCookieModal() {
+            document.getElementById('cookieModal').classList.add('visible');
+            document.getElementById('cookieInput').value = '';
+        }
+
+        function closeCookieModal() {
+            document.getElementById('cookieModal').classList.remove('visible');
+        }
+
+        async function saveCookies() {
+            const cookies = document.getElementById('cookieInput').value.trim();
+            if (!cookies) {
+                showToast('Please paste cookies content', true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cookies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cookies })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Cookies saved successfully!');
+                    closeCookieModal();
+                    checkCookieStatus();
+                } else {
+                    showToast(data.error || 'Failed to save cookies', true);
+                }
+            } catch (error) {
+                showToast('Failed to save cookies', true);
+            }
+        }
+
+        async function deleteCookies() {
+            if (!confirm('Delete saved cookies?')) return;
+
+            try {
+                const response = await fetch('/api/cookies', { method: 'DELETE' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Cookies deleted');
+                    closeCookieModal();
+                    checkCookieStatus();
+                } else {
+                    showToast(data.error || 'No cookies to delete', true);
+                }
+            } catch (error) {
+                showToast('Failed to delete cookies', true);
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('cookieModal').addEventListener('click', (e) => {
+            if (e.target.id === 'cookieModal') {
+                closeCookieModal();
+            }
+        });
+
+        // Load downloads and check cookie status on page load
         refreshDownloads();
+        checkCookieStatus();
     </script>
 </body>
 </html>
