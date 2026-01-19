@@ -184,8 +184,15 @@ def download_video(url, download_id, format_option='best', audio_only=False):
         format_option = 'best'
 
     try:
-        # Build command
-        cmd = ['yt-dlp', '--newline', '--progress']
+        # Build command with options to help avoid bot detection
+        cmd = [
+            'yt-dlp',
+            '--newline',
+            '--progress',
+            '--no-check-certificates',
+            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            '--extractor-args', 'youtube:player_client=android',
+        ]
 
         if audio_only:
             cmd.extend(['-x', '--audio-format', 'mp3'])
@@ -216,8 +223,13 @@ def download_video(url, download_id, format_option='best', audio_only=False):
         )
 
         filename = None
+        error_output = []
         for line in process.stdout:
             line = line.strip()
+
+            # Capture potential error messages
+            if 'ERROR' in line or 'error' in line.lower():
+                error_output.append(line)
 
             # Parse progress
             if '[download]' in line:
@@ -238,7 +250,15 @@ def download_video(url, download_id, format_option='best', audio_only=False):
 
         if process.returncode != 0:
             downloads[download_id]['status'] = 'error'
-            downloads[download_id]['error'] = 'Download failed'
+            # Provide more helpful error message
+            if error_output:
+                error_msg = error_output[-1][:100]  # Last error, truncated
+                if 'Sign in' in error_msg or 'bot' in error_msg.lower():
+                    downloads[download_id]['error'] = 'Video requires authentication or is blocked'
+                else:
+                    downloads[download_id]['error'] = f'Download failed: {error_msg}'
+            else:
+                downloads[download_id]['error'] = 'Download failed - video may be unavailable'
             return
 
         # Find the downloaded file
@@ -259,52 +279,59 @@ def download_video(url, download_id, format_option='best', audio_only=False):
                 downloads[download_id]['filename'] = os.path.basename(downloaded_file)
             return
 
-        # Convert to H.264 for QuickTime compatibility
+        # Convert to H.264 for QuickTime compatibility (optional - skip if ffmpeg not available)
         if downloaded_file:
             downloads[download_id]['progress'] = 75
 
-            # Check if already H.264
-            probe_cmd = ['ffprobe', '-v', 'error', '-select_streams', 'v:0',
-                        '-show_entries', 'stream=codec_name', '-of', 'csv=p=0', downloaded_file]
-            probe_result = subprocess.run(probe_cmd, capture_output=True, text=True)
-            codec = probe_result.stdout.strip()
+            # Check if ffmpeg is available
+            ffmpeg_available = subprocess.run(['which', 'ffprobe'], capture_output=True).returncode == 0
 
-            if codec != 'h264':
-                # Need to convert
-                output_file = os.path.splitext(downloaded_file)[0] + '_converted.mp4'
+            if ffmpeg_available:
+                # Check if already H.264
+                probe_cmd = ['ffprobe', '-v', 'error', '-select_streams', 'v:0',
+                            '-show_entries', 'stream=codec_name', '-of', 'csv=p=0', downloaded_file]
+                probe_result = subprocess.run(probe_cmd, capture_output=True, text=True)
+                codec = probe_result.stdout.strip()
 
-                convert_cmd = [
-                    'ffmpeg', '-i', downloaded_file,
-                    '-c:v', 'libx264', '-preset', 'fast', '-crf', '22',
-                    '-c:a', 'aac', '-b:a', '192k',
-                    '-movflags', '+faststart',
-                    '-y', output_file
-                ]
+                if codec != 'h264':
+                    # Need to convert
+                    output_file = os.path.splitext(downloaded_file)[0] + '_converted.mp4'
 
-                convert_process = subprocess.Popen(
-                    convert_cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True
-                )
+                    convert_cmd = [
+                        'ffmpeg', '-i', downloaded_file,
+                        '-c:v', 'libx264', '-preset', 'fast', '-crf', '22',
+                        '-c:a', 'aac', '-b:a', '192k',
+                        '-movflags', '+faststart',
+                        '-y', output_file
+                    ]
 
-                # Monitor conversion progress
-                for line in convert_process.stdout:
-                    if 'frame=' in line:
-                        downloads[download_id]['progress'] = 85
+                    convert_process = subprocess.Popen(
+                        convert_cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True
+                    )
 
-                convert_process.wait()
+                    # Monitor conversion progress
+                    for line in convert_process.stdout:
+                        if 'frame=' in line:
+                            downloads[download_id]['progress'] = 85
 
-                if convert_process.returncode == 0:
-                    # Remove original, rename converted
-                    os.remove(downloaded_file)
-                    final_file = os.path.splitext(downloaded_file)[0] + '.mp4'
-                    os.rename(output_file, final_file)
-                    downloads[download_id]['filename'] = os.path.basename(final_file)
+                    convert_process.wait()
+
+                    if convert_process.returncode == 0:
+                        # Remove original, rename converted
+                        os.remove(downloaded_file)
+                        final_file = os.path.splitext(downloaded_file)[0] + '.mp4'
+                        os.rename(output_file, final_file)
+                        downloads[download_id]['filename'] = os.path.basename(final_file)
+                    else:
+                        # Conversion failed, keep original
+                        downloads[download_id]['filename'] = os.path.basename(downloaded_file)
                 else:
-                    # Conversion failed, keep original
                     downloads[download_id]['filename'] = os.path.basename(downloaded_file)
             else:
+                # ffmpeg not available, skip conversion
                 downloads[download_id]['filename'] = os.path.basename(downloaded_file)
 
         downloads[download_id]['status'] = 'completed'
