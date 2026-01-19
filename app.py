@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""YouTube Video Downloader Web App using yt-dlp"""
+"""Video Downloader Web App using yt-dlp"""
 
 import os
 import subprocess
@@ -24,11 +24,68 @@ def add_security_headers(response):
 
 # Allowed video URL patterns
 ALLOWED_DOMAINS = [
-    'youtube.com', 'www.youtube.com', 'm.youtube.com',
-    'youtu.be',
-    'vimeo.com', 'www.vimeo.com',
+    # YouTube
+    'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be',
+    # Vimeo
+    'vimeo.com', 'www.vimeo.com', 'player.vimeo.com',
+    # Dailymotion
     'dailymotion.com', 'www.dailymotion.com',
-    'twitch.tv', 'www.twitch.tv',
+    # Twitch
+    'twitch.tv', 'www.twitch.tv', 'clips.twitch.tv',
+    # Twitter/X
+    'twitter.com', 'www.twitter.com', 'x.com', 'www.x.com',
+    # Instagram
+    'instagram.com', 'www.instagram.com',
+    # TikTok
+    'tiktok.com', 'www.tiktok.com', 'vm.tiktok.com',
+    # Facebook
+    'facebook.com', 'www.facebook.com', 'fb.watch', 'www.fb.watch',
+    # Reddit
+    'reddit.com', 'www.reddit.com', 'v.redd.it', 'old.reddit.com',
+    # Streamable
+    'streamable.com', 'www.streamable.com',
+    # Imgur
+    'imgur.com', 'www.imgur.com', 'i.imgur.com',
+    # Gfycat
+    'gfycat.com', 'www.gfycat.com',
+    # Rumble
+    'rumble.com', 'www.rumble.com',
+    # Bitchute
+    'bitchute.com', 'www.bitchute.com',
+    # Odysee/LBRY
+    'odysee.com', 'www.odysee.com',
+    # PeerTube instances (common ones)
+    'peertube.tv', 'framatube.org', 'video.blender.org',
+    # Bilibili
+    'bilibili.com', 'www.bilibili.com', 'b23.tv',
+    # Niconico
+    'nicovideo.jp', 'www.nicovideo.jp',
+    # SoundCloud (audio)
+    'soundcloud.com', 'www.soundcloud.com',
+    # Bandcamp (audio)
+    'bandcamp.com',
+    # Mixcloud
+    'mixcloud.com', 'www.mixcloud.com',
+    # Spotify (limited support)
+    'open.spotify.com',
+    # CNN
+    'cnn.com', 'www.cnn.com',
+    # BBC
+    'bbc.com', 'www.bbc.com', 'bbc.co.uk', 'www.bbc.co.uk',
+    # Vevo
+    'vevo.com', 'www.vevo.com',
+    # Coub
+    'coub.com', 'www.coub.com',
+    # VK
+    'vk.com', 'www.vk.com',
+    # Flickr
+    'flickr.com', 'www.flickr.com',
+    # Tumblr
+    'tumblr.com', 'www.tumblr.com',
+    # Ted
+    'ted.com', 'www.ted.com',
+    # Crunchyroll
+    'crunchyroll.com', 'www.crunchyroll.com',
 ]
 
 VALID_FORMATS = {'best', '1080p', '720p', '480p'}
@@ -381,7 +438,7 @@ def delete_file(filename):
 
 if __name__ == '__main__':
     print("\n" + "="*50)
-    print("  YouTube Video Downloader")
+    print("  Video Downloader")
     print("="*50)
     print(f"\n  Open in browser: http://localhost:8000")
     print(f"  Downloads folder: {DOWNLOAD_DIR}")
