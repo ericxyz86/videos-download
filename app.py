@@ -165,8 +165,10 @@ def get_video_info(url):
         )
         if result.returncode == 0:
             return json.loads(result.stdout)
-        # Sanitize error message - don't expose internal details
-        return {'error': 'Failed to fetch video information'}
+        # Log error for debugging, but sanitize for response
+        error_msg = result.stderr[:200] if result.stderr else 'Unknown error'
+        print(f"yt-dlp error: {error_msg}")
+        return {'error': 'Failed to fetch video information', 'debug': error_msg}
     except subprocess.TimeoutExpired:
         return {'error': 'Timeout while fetching video info'}
     except Exception:
