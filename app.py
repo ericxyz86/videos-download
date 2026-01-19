@@ -149,7 +149,15 @@ def get_video_info(url):
 
     try:
         result = subprocess.run(
-            ['yt-dlp', '--dump-json', '--no-download', '--', url],
+            [
+                'yt-dlp',
+                '--dump-json',
+                '--no-download',
+                '--no-check-certificates',
+                '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                '--extractor-args', 'youtube:player_client=android',
+                '--', url
+            ],
             capture_output=True,
             text=True,
             timeout=30
