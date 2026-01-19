@@ -154,13 +154,14 @@ def get_video_info(url):
                 '--dump-json',
                 '--no-download',
                 '--no-check-certificates',
+                '--geo-bypass',
                 '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                '--extractor-args', 'youtube:player_client=android',
+                '--extractor-args', 'youtube:player_client=web,default;youtube:player_skip=webpage',
                 '--', url
             ],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=60
         )
         if result.returncode == 0:
             return json.loads(result.stdout)
@@ -198,8 +199,9 @@ def download_video(url, download_id, format_option='best', audio_only=False):
             '--newline',
             '--progress',
             '--no-check-certificates',
+            '--geo-bypass',
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            '--extractor-args', 'youtube:player_client=android',
+            '--extractor-args', 'youtube:player_client=web,default;youtube:player_skip=webpage',
         ]
 
         if audio_only:
