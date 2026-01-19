@@ -7,3 +7,4 @@ __pycache__/
 *.webm
 *.mkv
 .DS_Store
+cookies.txt
