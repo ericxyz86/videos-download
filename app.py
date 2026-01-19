@@ -184,15 +184,8 @@ def download_video(url, download_id, format_option='best', audio_only=False):
         format_option = 'best'
 
     try:
-        # Build command with options to help avoid bot detection
-        cmd = [
-            'yt-dlp',
-            '--newline',
-            '--progress',
-            '--no-check-certificates',
-            '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            '--extractor-args', 'youtube:player_client=android',
-        ]
+        # Build command
+        cmd = ['yt-dlp', '--newline', '--progress']
 
         if audio_only:
             cmd.extend(['-x', '--audio-format', 'mp3'])
