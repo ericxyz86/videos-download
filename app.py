@@ -7,6 +7,7 @@ import json
 import re
 import threading
 import secrets
+import time
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, jsonify, send_from_directory, abort
 
@@ -142,37 +143,53 @@ def sanitize_filename(filename):
     return re.sub(r'[<>:"/\\|?*]', '', filename)
 
 
-def get_video_info(url):
-    """Get video information without downloading"""
+def get_video_info(url, retries=3):
+    """Get video information without downloading, with retry logic for rate limits"""
     if not is_valid_video_url(url):
         return {'error': 'Invalid or unsupported video URL'}
 
-    try:
-        result = subprocess.run(
-            [
-                'yt-dlp',
-                '--dump-json',
-                '--no-download',
-                '--no-check-certificates',
-                '--geo-bypass',
-                '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                '--extractor-args', 'youtube:player_client=web,default;youtube:player_skip=webpage',
-                '--', url
-            ],
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
-        if result.returncode == 0:
-            return json.loads(result.stdout)
-        # Log error for debugging, but sanitize for response
-        error_msg = result.stderr[:200] if result.stderr else 'Unknown error'
-        print(f"yt-dlp error: {error_msg}")
-        return {'error': 'Failed to fetch video information', 'debug': error_msg}
-    except subprocess.TimeoutExpired:
-        return {'error': 'Timeout while fetching video info'}
-    except Exception:
-        return {'error': 'An error occurred while fetching video info'}
+    last_error = None
+    for attempt in range(retries):
+        try:
+            # Add sleep between retries with exponential backoff
+            if attempt > 0:
+                time.sleep(2 ** attempt)  # 2s, 4s between retries
+
+            result = subprocess.run(
+                [
+                    'yt-dlp',
+                    '--dump-json',
+                    '--no-download',
+                    '--no-check-certificates',
+                    '--geo-bypass',
+                    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    '--extractor-args', 'youtube:player_client=default',
+                    '--', url
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            if result.returncode == 0:
+                return json.loads(result.stdout)
+
+            # Check if it's a rate limit error
+            error_msg = result.stderr[:300] if result.stderr else 'Unknown error'
+            last_error = error_msg
+            print(f"yt-dlp error (attempt {attempt + 1}): {error_msg}")
+
+            # Don't retry if it's not a rate limit
+            if '429' not in error_msg and 'Too Many' not in error_msg:
+                break
+
+        except subprocess.TimeoutExpired:
+            last_error = 'Timeout'
+            continue
+        except Exception as e:
+            last_error = str(e)
+            break
+
+    return {'error': 'Failed to fetch video information. YouTube may be rate-limiting this server.', 'debug': last_error}
 
 
 def download_video(url, download_id, format_option='best', audio_only=False):
