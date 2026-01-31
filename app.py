@@ -133,7 +133,10 @@ def get_safe_filepath(filename):
 # Store download progress
 downloads = {}
 DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downloads')
-COOKIES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt')
+# Use persistent data dir if available, fallback to app dir
+DATA_DIR = os.environ.get('DATA_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data'))
+os.makedirs(DATA_DIR, exist_ok=True)
+COOKIES_FILE = os.path.join(DATA_DIR, 'cookies.txt')
 
 # Ensure download directory exists
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
