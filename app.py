@@ -174,6 +174,7 @@ def get_video_info(url, retries=3):
                 '--geo-bypass',
                 '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 '--extractor-args', 'youtube:player_client=default',
+                '--remote-components', 'ejs:github',
             ]
             cmd.extend(get_cookies_args())
             cmd.extend(['--', url])
@@ -234,7 +235,8 @@ def download_video(url, download_id, format_option='best', audio_only=False):
             '--no-check-certificates',
             '--geo-bypass',
             '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            '--extractor-args', 'youtube:player_client=web,default;youtube:player_skip=webpage',
+            '--extractor-args', 'youtube:player_client=web,default',
+            '--remote-components', 'ejs:github',
         ]
         cmd.extend(get_cookies_args())
 
@@ -245,13 +247,13 @@ def download_video(url, download_id, format_option='best', audio_only=False):
             # Prefer H.264 (avc1) codec for QuickTime compatibility
             # Fallback to any format if H.264 not available
             if format_option == 'best':
-                cmd.extend(['-f', 'bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[vcodec^=avc1]+bestaudio/best[vcodec^=avc1]/bestvideo+bestaudio/best'])
+                cmd.extend(['-f', 'bv*+ba/b'])
             elif format_option == '1080p':
-                cmd.extend(['-f', 'bestvideo[height<=1080][vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[height<=1080][vcodec^=avc1]+bestaudio/best[height<=1080][vcodec^=avc1]/bestvideo[height<=1080]+bestaudio/best[height<=1080]'])
+                cmd.extend(['-f', 'bv*[height<=1080]+ba/b[height<=1080]/bv*+ba/b'])
             elif format_option == '720p':
-                cmd.extend(['-f', 'bestvideo[height<=720][vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[height<=720][vcodec^=avc1]+bestaudio/best[height<=720][vcodec^=avc1]/bestvideo[height<=720]+bestaudio/best[height<=720]'])
+                cmd.extend(['-f', 'bv*[height<=720]+ba/b[height<=720]/bv*+ba/b'])
             elif format_option == '480p':
-                cmd.extend(['-f', 'bestvideo[height<=480][vcodec^=avc1]+bestaudio[acodec^=mp4a]/bestvideo[height<=480][vcodec^=avc1]+bestaudio/best[height<=480][vcodec^=avc1]/bestvideo[height<=480]+bestaudio/best[height<=480]'])
+                cmd.extend(['-f', 'bv*[height<=480]+ba/b[height<=480]/bv*+ba/b'])
 
             cmd.extend(['--merge-output-format', 'mp4'])
             output_template = os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s')
