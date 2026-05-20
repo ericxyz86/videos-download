@@ -9,7 +9,7 @@ import threading
 import secrets
 import time
 from urllib.parse import urlparse
-from flask import Flask, render_template, request, jsonify, send_from_directory, abort
+from flask import Flask, render_template, request, jsonify, send_file, abort
 
 app = Flask(__name__)
 
@@ -127,7 +127,7 @@ def get_safe_filepath(filename):
     real_filepath = os.path.realpath(filepath)
     if not real_filepath.startswith(real_download_dir + os.sep):
         return None
-    return filepath
+    return real_filepath
 
 
 # Store download progress
@@ -493,7 +493,7 @@ def serve_download(filename):
     filepath = get_safe_filepath(filename)
     if not filepath or not os.path.isfile(filepath):
         abort(404)
-    return send_from_directory(DOWNLOAD_DIR, filename, as_attachment=True)
+    return send_file(filepath, as_attachment=True, download_name=os.path.basename(filepath))
 
 
 @app.route('/api/delete/<filename>', methods=['DELETE'])
